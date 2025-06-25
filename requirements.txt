@@ -1,0 +1,15 @@
+fastapi
+uvicorn
+python-dotenv
+pydantic
+langchain
+langgraph
+langchain-community
+langchain-openai
+openai
+tiktoken
+langsmith
+google-cloud-bigquery
+google-auth
+sqlalchemy
+sqlalchemy-bigquery
