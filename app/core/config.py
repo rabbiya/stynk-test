@@ -1,5 +1,6 @@
 """
-Configuration settings
+Configuration settings for the SQL Agent
+All settings can be overridden with environment variables
 """
 
 import os
@@ -8,18 +9,18 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
-# Model settings
-LLM_MODEL = os.getenv("LLM_MODEL", "gpt-4o-mini")  # Default to gpt-4 if not specified
-LLM_PROVIDER = os.getenv("LLM_PROVIDER", "openai")  # Default to openai if not specified
-LLM_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", "0"))  # Default to 0 for deterministic output
+# AI Model Configuration
+LLM_MODEL = os.getenv("LLM_MODEL", "gpt-4o-mini")
+LLM_PROVIDER = os.getenv("LLM_PROVIDER", "openai")
+LLM_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", "0"))  # 0 = deterministic responses
 
-# BigQuery settings
+# BigQuery Database Configuration
 BIGQUERY_PROJECT_ID = os.getenv("BIGQUERY_PROJECT_ID")
 BIGQUERY_DATASET = os.getenv("BIGQUERY_DATASET")
 
-# API settings
+# API Keys
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-# Query settings
-MAX_BYTES_BILLED = int(os.getenv("MAX_BYTES_BILLED", "500000000"))  # Default to 500MB
-QUERY_TIMEOUT = int(os.getenv("QUERY_TIMEOUT", "30"))  # Default to 30 seconds 
+# Query Limits and Safety
+MAX_BYTES_BILLED = int(os.getenv("MAX_BYTES_BILLED", "10000000000"))  # 10GB limit (increased from 5GB)
+QUERY_TIMEOUT = int(os.getenv("QUERY_TIMEOUT", "90"))  # 90 seconds timeout (increased from 60) 
