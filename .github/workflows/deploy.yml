@@ -58,13 +58,11 @@ jobs:
       # Tag Docker image
       - name: Tag Docker image
         run: |
-          docker tag usheru-dev:latest 493164085713.dkr.ecr.eu-west-1.amazonaws.com/usheru-dev:$BITBUCKET_BUILD_NUMBER
           docker tag usheru-dev:latest 493164085713.dkr.ecr.eu-west-1.amazonaws.com/usheru-dev:latest
 
       #  Push Docker image to ECR
       - name: Push Docker image to ECR
         run: |
-          docker push 493164085713.dkr.ecr.eu-west-1.amazonaws.com/usheru-dev:$BITBUCKET_BUILD_NUMBER
           docker push 493164085713.dkr.ecr.eu-west-1.amazonaws.com/usheru-dev:latest
 
       # Setup SSH
