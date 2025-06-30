@@ -6,6 +6,7 @@ Start the BigQuery SQL Agent
 import os
 import sys
 import uvicorn
+import argparse
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -13,6 +14,11 @@ load_dotenv()
 def main():
     print("🚀 Starting BigQuery SQL Agent")
     print("=" * 50)
+    
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--port", type=int, default=8000)
+    args = parser.parse_args()
+
     
     # Set default values for BigQuery (update these for your project)
     os.environ.setdefault("BIGQUERY_PROJECT_ID", "cogent-tine-87309")
@@ -59,7 +65,7 @@ def main():
     uvicorn.run(
         "app.main:app",
         host="0.0.0.0",
-        port=8000,
+        port=args.port,
         reload=True
     )
 
