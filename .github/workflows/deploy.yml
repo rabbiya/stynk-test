@@ -1,0 +1,105 @@
+name: Build and Deploy to develop
+
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  build_and_deploy:
+    name: Build and Deploy to Dev
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout Code
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # Configure AWS credentials
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-west-1  # Region of your EC2 SG
+
+      # Get runner public IP
+      - name: Get runner IP address
+        id: ip
+        uses: haythem/public-ip@v1.2
+
+      # Whitelist runner IP for port 22 (SSH)
+      - name: Whitelist runner IP address
+        run: |
+          aws ec2 authorize-security-group-ingress \
+            --group-id $AWS_INSTANCE_SG_ID \
+            --protocol tcp \
+            --port 22 \
+            --cidr ${{ steps.ip.outputs.ipv4 }}/32
+        env:
+          AWS_INSTANCE_SG_ID: ${{ secrets.AWS_INSTANCE_SG_ID }}
+
+      # Login to Amazon ECR
+      - name: Login to Amazon ECR
+        run: |
+          aws ecr get-login-password --region eu-west-1 | docker login --username AWS --password-stdin 493164085713.dkr.ecr.eu-west-1.amazonaws.com
+
+      # Download environment file from S3
+      - name: Download environment file from S3
+        run: |
+          aws s3 cp s3://usheru-env/dev-env/env .
+          mv env .env
+
+      # Build Docker image
+      - name: Build Docker image
+        run: |
+          docker build -t usheru-dev .
+
+      # Tag Docker image
+      - name: Tag Docker image
+        run: |
+          docker tag usheru-dev:latest 493164085713.dkr.ecr.eu-west-1.amazonaws.com/usheru-dev:latest
+
+      #  Push Docker image to ECR
+      - name: Push Docker image to ECR
+        run: |
+          docker push 493164085713.dkr.ecr.eu-west-1.amazonaws.com/usheru-dev:latest
+
+      # Setup SSH
+      - name: Set up SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.SSH_SERVER_IP }} >> ~/.ssh/known_hosts
+
+      
+
+      # Deploy to dev server
+      - name: Deploy to dev server
+        run: |
+          echo "Connecting to SSH server ubuntu@${{ secrets.SSH_SERVER_IP }}"
+          ssh -o StrictHostKeyChecking=no "ubuntu@${{ secrets.SSH_SERVER_IP }}" << 'EOF'
+          if [ -f /home/ubuntu/usheru-dev/deploy-dev.sh ]; then
+            chmod +x /home/ubuntu/usheru-dev/deploy-dev.sh && 
+            /usr/bin/bash /home/ubuntu/usheru-dev/deploy-dev.sh;
+          else
+            echo 'deploy-dev.sh not found';
+            exit 1;
+          fi
+          EOF
+
+      #  Revoke runner IP after deployment
+      - name: Revoke runner IP address
+        if: always()
+        run: |
+          aws ec2 revoke-security-group-ingress \
+            --group-id $AWS_INSTANCE_SG_ID \
+            --protocol tcp \
+            --port 22 \
+            --cidr ${{ steps.ip.outputs.ipv4 }}/32
+        env:
+          AWS_INSTANCE_SG_ID: ${{ secrets.AWS_INSTANCE_SG_ID }}
+
