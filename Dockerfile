@@ -1,21 +1,27 @@
-# Base image with Python 3.13.2
-FROM python:3.13-rc-slim
+FROM python:3.13.2-slim
 
-# Set working directory
 WORKDIR /app
 
-# Copy dependencies
-COPY requirements.txt .
+# ---- system build deps ----
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        build-essential        \
+        gfortran               \
+        git                    \
+        && rm -rf /var/lib/apt/lists/*
 
-# Install dependencies
+# ---- python deps ----
+# First install critical pins to avoid earlier errors
 RUN pip install --upgrade pip && \
-    pip install -r requirements.txt
+    pip install \
+        "pydantic>=1.10.14,<2.0" \
+        "langgraph>=0.0.33"
 
-# Copy all source code into container
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+
 COPY . .
 
-# Expose FastAPI port
 EXPOSE 8000
-
-# Run the application using python run.py
 CMD ["python", "run.py"]
+
