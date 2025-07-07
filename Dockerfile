@@ -1,71 +1,40 @@
-<<<<<<< HEAD
-FROM python:3.13.2-slim
+FROM python:3.13.3-slim
 
-WORKDIR /app
-
-# ---- system build deps ----
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-        build-essential        \
-        gfortran               \
-        git                    \
-        && rm -rf /var/lib/apt/lists/*
-
-# ---- python deps ----
-# First install critical pins to avoid earlier errors
-RUN pip install --upgrade pip && \
-    pip install \
-        "pydantic>=1.10.14,<2.0" \
-        "langgraph>=0.0.33"
-
-COPY requirements.txt .
-RUN pip install -r requirements.txt
-
-COPY . .
-
-EXPOSE 8000
-CMD ["python", "run.py"]
-
-=======
-# Use official Python 3.13.2 base image
-FROM python:3.13.2-slim
+# Prevents writing .pyc files and ensures logs appear immediately
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
 # Set working directory
 WORKDIR /app
 
-# Install required OS packages
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-        build-essential \
-        gcc \
-        g++ \
-        git \
-        curl \
-        wget \
-        unzip \
-        libffi-dev \
-        libssl-dev && \
-    rm -rf /var/lib/apt/lists/*
+# Install build tools, Rust (for tiktoken), and system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    libffi-dev \
+    libssl-dev \
+    libpq-dev \
+    curl \
+    gcc \
+    pkg-config \
+    git \
+    && curl https://sh.rustup.rs -sSf | bash -s -- -y \
+    && export PATH="/root/.cargo/bin:$PATH" \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+ENV PATH="/root/.cargo/bin:$PATH"
 
 # Copy dependency list
 COPY requirements.txt .
 
-# Upgrade pip and install pinned core dependencies first to avoid resolution issues
-RUN pip install --upgrade pip && \
-    pip install --prefer-binary --no-cache-dir \
-        "anyio>=3.6,<4.0" \
-        "pydantic>=1.10.14,<2.0" \
-        "langgraph>=0.0.33"
+# Install Python packages
+RUN pip install --upgrade pip && pip install -r requirements.txt
 
-# Then install remaining dependencies
-RUN pip install --prefer-binary --no-cache-dir -r requirements.txt
-
-# Copy rest of the application
+# Copy app code
 COPY . .
 
-# Expose the port FastAPI runs on
+# Expose API port
 EXPOSE 8000
 
-# Default command to run the app
+# Start the FastAPI app
 CMD ["python", "run.py"]
->>>>>>> 38e22a6842795409763f4c510e8078b489df5111
+
