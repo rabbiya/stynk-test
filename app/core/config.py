@@ -22,5 +22,5 @@ BIGQUERY_DATASET = os.getenv("BIGQUERY_DATASET")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 # Query Limits and Safety
-MAX_BYTES_BILLED = int(os.getenv("MAX_BYTES_BILLED", "10000000000"))  # 10GB limit (increased from 5GB)
-QUERY_TIMEOUT = int(os.getenv("QUERY_TIMEOUT", "90"))  # 90 seconds timeout (increased from 60) 
+MAX_BYTES_BILLED = int(os.getenv("MAX_BYTES_BILLED", "10000000000").split('#')[0].strip())  # 10GB limit (increased from 5GB)
+QUERY_TIMEOUT = int(os.getenv("QUERY_TIMEOUT", "90").split('#')[0].strip())  # 90 seconds timeout (increased from 60) 

@@ -1,0 +1,10 @@
+Generated Query:
+SELECT ARRAY_TO_STRING(cd.genres, ', ') AS genres, COUNT(*) AS show_count
+FROM cogent-tine-87309.usheru_data_mart.showtime_fact AS sf
+JOIN cogent-tine-87309.usheru_data_mart.cinema_dimension AS c ON sf.cinema_id = c.cinema_id
+JOIN cogent-tine-87309.usheru_data_mart.content_dimension AS cd ON sf.content_id = cd.content_id
+WHERE DATE(sf.local_show_datetime) >= DATE_SUB(CURRENT_DATE(), INTERVAL 18 MONTH)
+  AND 'France' IN UNNEST(cd.production_countries)
+GROUP BY genres
+ORDER BY show_count DESC
+LIMIT 10

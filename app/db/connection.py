@@ -8,8 +8,12 @@ from langchain_community.utilities import SQLDatabase
 from google.cloud import bigquery
 from google.oauth2 import service_account
 import logging
+from app.db.schema_metadata import SCHEMA_DESCRIPTIONS
 
 logger = logging.getLogger(__name__)
+
+# Debug check for schema metadata
+logger.info(f"Available tables in SCHEMA_DESCRIPTIONS: {list(SCHEMA_DESCRIPTIONS.keys())}")
 
 class BigQueryConnection:
     """Manages BigQuery connection and schema information"""
@@ -83,24 +87,44 @@ class BigQueryConnection:
             
             schema_info = {}
             for table in tables:
-                table_ref = dataset_ref.table(table.table_id)
+                table_id = table.table_id
+                table_ref = dataset_ref.table(table_id)
                 table_obj = self.client.get_table(table_ref)
+                
+                # Get metadata descriptions from schema_metadata
+                table_metadata = SCHEMA_DESCRIPTIONS.get(table_id, {})
+                logger.info(f"Table {table_id} metadata: {table_metadata}")
+                
+                table_desc = table_metadata.get('description', '') or table_obj.description or ''
+                logger.info(f"Table {table_id} description: {table_desc}")
+                
+                column_metadata = {col['name']: col for col in table_metadata.get('columns', [])} if table_metadata else {}
+                logger.info(f"Table {table_id} column metadata: {column_metadata}")
                 
                 # Extract column information
                 columns = []
                 for field in table_obj.schema:
+                    # Get column metadata if available
+                    col_metadata = column_metadata.get(field.name, {})
+                    logger.info(f"Column {field.name} metadata: {col_metadata}")
+                    
+                    description = col_metadata.get('description', '') or field.description or ''
+                    logger.info(f"Column {field.name} description: {description}")
+                    
                     columns.append({
                         'name': field.name,
                         'type': field.field_type,
-                        'description': field.description or ''
+                        'description': description
                     })
                 
                 # Store table information
-                schema_info[table.table_id] = {
+                schema_info[table_id] = {
                     'columns': columns,
                     'num_rows': table_obj.num_rows,
-                    'description': table_obj.description or ''
+                    'description': table_desc
                 }
+                
+                logger.info(f"Final schema info for table {table_id}: {schema_info[table_id]}")
             
             return schema_info
             

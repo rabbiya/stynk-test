@@ -1,6 +1,6 @@
 """
 Simple workflow orchestrator for SQL Agent
-Manages the flow: Intent Detection → Query Generation → Execution → Answer Generation
+Manages the flow: Intent Detection → Query Generation → Execution → Relevance Check → Answer Generation
 """
 
 from langgraph.graph import START, END, StateGraph
@@ -9,6 +9,7 @@ from app.core.state import State
 from app.agents.intent_detector import detect_intent
 from app.agents.query_generator import generate_query
 from app.agents.query_executor import execute_query
+from app.agents.relevance_checker import check_relevance_and_retry
 from app.agents.answer_generator import generate_answer
 
 class SQLAgent:
@@ -26,6 +27,7 @@ class SQLAgent:
         builder.add_node("detect_intent", detect_intent)
         builder.add_node("generate_query", generate_query)
         builder.add_node("execute_query", execute_query)
+        builder.add_node("check_relevance", check_relevance_and_retry)
         builder.add_node("generate_answer", generate_answer)
         
         # Define the workflow path
@@ -38,9 +40,10 @@ class SQLAgent:
             {"end": END, "continue": "generate_query"}
         )
         
-        # Linear flow for SQL queries
+        # Linear flow for SQL queries with relevance checking
         builder.add_edge("generate_query", "execute_query")
-        builder.add_edge("execute_query", "generate_answer")
+        builder.add_edge("execute_query", "check_relevance")
+        builder.add_edge("check_relevance", "generate_answer")
         builder.add_edge("generate_answer", END)
         
         return builder.compile(checkpointer=self.memory)

@@ -1,0 +1,13 @@
+Generated Query:
+SELECT sd.star_name AS director_name, COUNT(*) AS showtime_count
+FROM cogent-tine-87309.usheru_data_mart.showtime_fact AS sf
+JOIN cogent-tine-87309.usheru_data_mart.cinema_dimension AS c ON sf.cinema_id = c.cinema_id
+JOIN cogent-tine-87309.usheru_data_mart.content_dimension AS cd ON sf.content_id = cd.content_id
+JOIN cogent-tine-87309.usheru_data_mart.content_star_mapping AS csm ON cd.content_id = csm.content_id
+JOIN cogent-tine-87309.usheru_data_mart.star_dimension AS sd ON csm.star_id = sd.star_id
+WHERE c.city = 'Dublin'
+AND DATE(sf.local_show_datetime) >= DATE_SUB(CURRENT_DATE(), INTERVAL 2 YEAR)
+AND csm.crew_role = 'Director'
+GROUP BY sd.star_name
+ORDER BY showtime_count DESC
+LIMIT 1
