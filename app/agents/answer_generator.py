@@ -34,15 +34,20 @@ class AnswerGenerator:
             if state["result"] and len(state["result"]) > 1:
                 results_text = str(state["result"][:6])  # Headers + 5 data rows
             
+            # Add visualization context to the prompt
+            visualization_info = ""
+            if state.get("needs_visualization", False) and state.get("chart_type"):
+                visualization_info = f"\nVisualization: A {state['chart_type']} chart has been generated to help visualize this data."
+            
             # Simple prompt for answer generation
             prompt = f"""Based on the SQL query results, provide a clear answer to the user's question.
 
 User Question: {state['question']}
 SQL Query: {state['query']}
-Results: {results_text}
+Results: {results_text}{visualization_info}
 
-Provide a helpful, conversational answer that explains what the data shows:
-after that double check response with real data (present on internet) and show with heading double check:
+Provide a helpful, conversational answer that explains what the data shows.
+If a visualization was generated, mention it briefly in your response.
 """
             
             # Get LLM response and count tokens

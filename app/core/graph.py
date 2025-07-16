@@ -7,9 +7,11 @@ from langgraph.graph import START, END, StateGraph
 from langgraph.checkpoint.memory import MemorySaver
 from app.core.state import State
 from app.agents.intent_detector import detect_intent
+from app.agents.visualization_detector import detect_visualization
 from app.agents.query_generator import generate_query
 from app.agents.query_executor import execute_query
 from app.agents.relevance_checker import check_relevance_and_retry
+from app.agents.chart_generator import generate_chart
 from app.agents.answer_generator import generate_answer
 
 class SQLAgent:
@@ -25,9 +27,11 @@ class SQLAgent:
         
         # Add processing steps
         builder.add_node("detect_intent", detect_intent)
+        builder.add_node("detect_visualization", detect_visualization)
         builder.add_node("generate_query", generate_query)
         builder.add_node("execute_query", execute_query)
         builder.add_node("check_relevance", check_relevance_and_retry)
+        builder.add_node("generate_chart", generate_chart)
         builder.add_node("generate_answer", generate_answer)
         
         # Define the workflow path
@@ -37,13 +41,14 @@ class SQLAgent:
         builder.add_conditional_edges(
             "detect_intent",
             self._should_continue_to_sql,
-            {"end": END, "continue": "generate_query"}
-        )
-        
-        # Linear flow for SQL queries with relevance checking
+            {"end": END, "continue": "detect_visualization"}
+        )     
+        # Linear flow for SQL queries 
+        builder.add_edge("detect_visualization", "generate_query")
         builder.add_edge("generate_query", "execute_query")
         builder.add_edge("execute_query", "check_relevance")
-        builder.add_edge("check_relevance", "generate_answer")
+        builder.add_edge("check_relevance", "generate_chart")
+        builder.add_edge("generate_chart", "generate_answer")
         builder.add_edge("generate_answer", END)
         
         return builder.compile(checkpointer=self.memory)

@@ -115,7 +115,11 @@ async def query_data(request: QuestionRequest):
                 **token_usage
             },
             session_id=request.session_id,
-            conversation_count=len(final_state.get("conversation_history", []))
+            conversation_count=len(final_state.get("conversation_history", [])),
+            needs_visualization=final_state.get("needs_visualization", False),
+            chart_type=final_state.get("chart_type"),
+            chart_data=final_state.get("chart_data"),
+            visualization_html=final_state.get("visualization_html")
         )
         
     except Exception as e:
