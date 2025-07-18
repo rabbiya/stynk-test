@@ -11,4 +11,8 @@ class QueryResponse(BaseModel):
     insights: str
     token_usage: Dict[str, int]
     session_id: str
-    conversation_count: int 
+    conversation_count: int
+    needs_visualization: Optional[bool] = False
+    chart_type: Optional[str] = None
+    chart_data: Optional[Dict[str, Any]] = None
+    visualization_html: Optional[str] = None 

@@ -17,6 +17,10 @@ class State(TypedDict):
     session_id: str                        # User session identifier
     conversation_history: List[Dict[str, Any]]  # Previous conversations
     token_usage: Dict[str, int]            # LLM token consumption tracking
+    needs_visualization: bool              # Whether the query requires a chart
+    chart_type: Optional[str]              # Type of chart to generate (pie, bar, line, etc.)
+    chart_data: Optional[Dict[str, Any]]   # Chart configuration and data (JSON format)
+    visualization_html: Optional[str]      # Generated chart HTML
 
 def create_initial_state(question: str, session_id: str = "default") -> State:
     """Create a new state object for a user question"""
@@ -28,7 +32,11 @@ def create_initial_state(question: str, session_id: str = "default") -> State:
         intent="",
         session_id=session_id,
         conversation_history=[],
-        token_usage={}
+        token_usage={},
+        needs_visualization=False,
+        chart_type=None,
+        chart_data=None,
+        visualization_html=None
     )
 
 def add_to_history(state: State):
